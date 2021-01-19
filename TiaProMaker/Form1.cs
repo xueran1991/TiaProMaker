@@ -163,7 +163,7 @@ namespace TiaProMacker
                     File.Delete(fileInfo.ToString());
                 }
                 block.Export(fileInfo, ExportOptions.WithDefaults);
-
+                MessageBox.Show("已导出块：" + block.Name + "到.xml文件");
                 
             }
 
@@ -176,6 +176,7 @@ namespace TiaProMacker
         private void btn_ImportFC_Click(object sender, EventArgs e)
         {
 
+
         }
 
         //导入DB块
@@ -184,7 +185,40 @@ namespace TiaProMacker
 
         }
 
-        
+        //根据配置文件生成新的XML文件
+        private void btn_GenerateNewXml_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog selectFile = new OpenFileDialog();
+            selectFile.Title = "读取需要导入的配置文件";
+            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
+            selectFile.ShowDialog();
 
+            string excelFilePath = selectFile.FileName;
+            selectFile.Dispose();
+            if (excelFilePath != "")
+            {
+                ExcelReader excelReader = new ExcelReader(excelFilePath);
+
+                //// 如果存在多个工作部，需要用户选择一个
+                //if (excelReader.dataTables.Count>1)
+                //{
+                //    Form formSelectWorksheet = new Form();
+                //    formSelectWorksheet.Text = "配置文件有多个工作表，请选择其中一个";
+                //    formSelectWorksheet.Width = 500;                    
+                //    formSelectWorksheet.Show();
+                //}
+
+                configDataTable = excelReader.dataTables[0];
+
+                FileInfo fileInfo = new FileInfo("D:\\WORKLOG\\00_FA\\TIA\\Xmls_Blocks\\" + "P_Motors_FC" + ".xml");
+
+                XmlParser xmlParser = new XmlParser(fileInfo.ToString());
+                xmlParser.ParserFC(configDataTable);
+
+
+            }
+
+
+        }
     }
 }

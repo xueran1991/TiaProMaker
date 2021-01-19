@@ -39,6 +39,7 @@
             this.btn_ExportBlockXml = new System.Windows.Forms.Button();
             this.btn_ImportFC = new System.Windows.Forms.Button();
             this.btn_ImportDBs = new System.Windows.Forms.Button();
+            this.btn_GenerateNewXml = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btn_ReadExcel
@@ -119,7 +120,7 @@
             // 
             // btn_ExportBlockXml
             // 
-            this.btn_ExportBlockXml.Location = new System.Drawing.Point(403, 439);
+            this.btn_ExportBlockXml.Location = new System.Drawing.Point(392, 440);
             this.btn_ExportBlockXml.Name = "btn_ExportBlockXml";
             this.btn_ExportBlockXml.Size = new System.Drawing.Size(118, 65);
             this.btn_ExportBlockXml.TabIndex = 8;
@@ -147,11 +148,22 @@
             this.btn_ImportDBs.UseVisualStyleBackColor = true;
             this.btn_ImportDBs.Click += new System.EventHandler(this.btn_ImportDBs_Click);
             // 
+            // btn_GenerateNewXml
+            // 
+            this.btn_GenerateNewXml.Location = new System.Drawing.Point(392, 533);
+            this.btn_GenerateNewXml.Name = "btn_GenerateNewXml";
+            this.btn_GenerateNewXml.Size = new System.Drawing.Size(118, 58);
+            this.btn_GenerateNewXml.TabIndex = 10;
+            this.btn_GenerateNewXml.Text = "Generate New Xml";
+            this.btn_GenerateNewXml.UseVisualStyleBackColor = true;
+            this.btn_GenerateNewXml.Click += new System.EventHandler(this.btn_GenerateNewXml_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1219, 680);
+            this.Controls.Add(this.btn_GenerateNewXml);
             this.Controls.Add(this.btn_ImportDBs);
             this.Controls.Add(this.btn_ImportFC);
             this.Controls.Add(this.btn_ExportBlockXml);
@@ -184,6 +196,7 @@
         private System.Windows.Forms.Button btn_ExportBlockXml;
         private System.Windows.Forms.Button btn_ImportFC;
         private System.Windows.Forms.Button btn_ImportDBs;
+        private System.Windows.Forms.Button btn_GenerateNewXml;
     }
 }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using Siemens.Engineering;
 using Siemens.Engineering.SW;
@@ -11,6 +12,7 @@ using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
 
 using TiaProMacker;
+
 
 namespace src.Tia
 {
@@ -38,7 +40,7 @@ namespace src.Tia
 
                     if (tiaPortal.Projects.Count <= 0)
                     {
-                        //Form1.txt_Status.Text = "No TIA Portal Project was found!";
+                        MessageBox.Show("No TIA Portal Project was found!");
                         return null ;
                     }
                     tiaProject = tiaPortal.Projects[0];
@@ -46,10 +48,10 @@ namespace src.Tia
                     return tiaProject;                    
                     
                 case 0:
-                    //Form1.txt_Status.Text = "No running instance of TIA Portal was found!";
+                    MessageBox.Show("No running instance of TIA Portal was found!");
                     return null;
                 default:
-                    //Form1.txt_Status.Text = "More than one running instance of TIA Portal was found!";
+                    MessageBox.Show("More than one running instance of TIA Portal was found!");
                     return null;
             }
         }
