@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Data;
+using System.Windows.Forms;
 
 namespace src.Xml
 {
@@ -13,7 +14,7 @@ namespace src.Xml
         public  XmlDocument xmlDocument;
         public  XmlNode rootNode;
         public  XmlNamespaceManager _ns;
-        private static string xmlFileFullPath;
+        private string xmlFileFullPath;
 
         //构造函数，读入路径中的xml文件
         public XmlParser(string xmlFilePath)
@@ -37,6 +38,11 @@ namespace src.Xml
             XmlNode networkTemplateNode = rootNode.SelectSingleNode("//SW.Blocks.CompileUnit[@ID='3']");
             XmlNodeList templateAccessNodeList = networkTemplateNode.SelectNodes(".//SN:Parts/SN:Access", _ns);
 
+            if (networkTemplateNode == null)
+            {
+                MessageBox.Show("未发现模板程序段");
+                return;
+            }
             List<string> blockLinkColumns = new List<string>() { "UId", "NameCon", "AccessScope" };
             DataTable blockLinkTable = new DataTable();
             foreach (string name in blockLinkColumns)
@@ -127,8 +133,15 @@ namespace src.Xml
         }
 
         // DB
-        public void ParserDB(DataTable importDataTable)
+        public void ParserDB(string dbName)
         {
+            XmlNode dbNameNode = rootNode.SelectSingleNode("//Name");
+            XmlNode dbNumNode = rootNode.SelectSingleNode("//Number");
+
+            //修改DB块的名称
+            dbNameNode.InnerText = dbName;
+            //保存Xml文件
+            xmlDocument.Save(xmlFileFullPath);
 
         }
 

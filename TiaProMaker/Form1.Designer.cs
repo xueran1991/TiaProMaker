@@ -40,6 +40,9 @@
             this.btn_ImportFC = new System.Windows.Forms.Button();
             this.btn_ImportDBs = new System.Windows.Forms.Button();
             this.btn_GenerateNewXml = new System.Windows.Forms.Button();
+            this.txtBox_XmlFolderPath = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.btn_ChoseXmlFolder = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btn_ReadExcel
@@ -158,11 +161,42 @@
             this.btn_GenerateNewXml.UseVisualStyleBackColor = true;
             this.btn_GenerateNewXml.Click += new System.EventHandler(this.btn_GenerateNewXml_Click);
             // 
+            // txtBox_XmlFolderPath
+            // 
+            this.txtBox_XmlFolderPath.Location = new System.Drawing.Point(51, 737);
+            this.txtBox_XmlFolderPath.Name = "txtBox_XmlFolderPath";
+            this.txtBox_XmlFolderPath.ReadOnly = true;
+            this.txtBox_XmlFolderPath.Size = new System.Drawing.Size(459, 28);
+            this.txtBox_XmlFolderPath.TabIndex = 11;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(48, 716);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(134, 18);
+            this.label1.TabIndex = 12;
+            this.label1.Text = "Xmls存放目录：";
+            // 
+            // btn_ChoseXmlFolder
+            // 
+            this.btn_ChoseXmlFolder.Location = new System.Drawing.Point(516, 737);
+            this.btn_ChoseXmlFolder.Name = "btn_ChoseXmlFolder";
+            this.btn_ChoseXmlFolder.Size = new System.Drawing.Size(56, 28);
+            this.btn_ChoseXmlFolder.TabIndex = 13;
+            this.btn_ChoseXmlFolder.Text = "...";
+            this.btn_ChoseXmlFolder.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.btn_ChoseXmlFolder.UseVisualStyleBackColor = true;
+            this.btn_ChoseXmlFolder.Click += new System.EventHandler(this.btn_ChoseXmlFolder_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1219, 680);
+            this.ClientSize = new System.Drawing.Size(1219, 840);
+            this.Controls.Add(this.btn_ChoseXmlFolder);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.txtBox_XmlFolderPath);
             this.Controls.Add(this.btn_GenerateNewXml);
             this.Controls.Add(this.btn_ImportDBs);
             this.Controls.Add(this.btn_ImportFC);
@@ -197,6 +231,9 @@
         private System.Windows.Forms.Button btn_ImportFC;
         private System.Windows.Forms.Button btn_ImportDBs;
         private System.Windows.Forms.Button btn_GenerateNewXml;
+        private System.Windows.Forms.TextBox txtBox_XmlFolderPath;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btn_ChoseXmlFolder;
     }
 }
 

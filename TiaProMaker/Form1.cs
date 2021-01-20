@@ -30,9 +30,12 @@ namespace TiaProMacker
 
         // 存放导入的配置文件的DataTabe
         public DataTable configDataTable;
-        //        
+        // Tia项目
         public Project tiaProject;
+        // Tia项目中的软件（PLC、HMI）
         public PlcSoftware plcSoftware;
+        // 存放xml文件的文件夹名
+        public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TIA";
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -157,7 +160,7 @@ namespace TiaProMacker
                 //MessageBox.Show(strBlockName);
                 PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
 
-                FileInfo fileInfo = new FileInfo("D:\\WORKLOG\\00_FA\\TIA\\Xmls_Blocks\\" + block.Name + ".xml");
+                FileInfo fileInfo = new FileInfo(xmlFileFolder + "\\" + block.Name + ".xml");
                 if(File.Exists(fileInfo.ToString()))
                 {
                     File.Delete(fileInfo.ToString());
@@ -175,14 +178,97 @@ namespace TiaProMacker
         //导入FC块
         private void btn_ImportFC_Click(object sender, EventArgs e)
         {
+            string strBlockName = listBox_Main.SelectedItem.ToString();
+            PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
+            string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
+            FileInfo fileInfo = new FileInfo(xmlFilePath);
+            // 1. 导出选中的块到xml文件
+            if (File.Exists(xmlFilePath))
+            {
+                //如果文件已经存在，删除后重新导出
+                File.Delete(xmlFilePath);
+            }
+            block.Export(fileInfo, ExportOptions.WithDefaults);
 
+            // 2. 根据用户选择的配置文件重新编辑获得新的xml文件
+            OpenFileDialog selectFile = new OpenFileDialog();
+            selectFile.Title = "读取需要导入的配置文件";
+            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
+            selectFile.ShowDialog();
+
+            string excelFilePath = selectFile.FileName;
+            selectFile.Dispose();
+            if (excelFilePath != "")
+            {
+                ExcelReader excelReader = new ExcelReader(excelFilePath);
+
+                //// 如果存在多个工作表，需要用户选择一个
+                //if (excelReader.dataTables.Count>1)
+                //{
+                //    Form formSelectWorksheet = new Form();
+                //    formSelectWorksheet.Text = "配置文件有多个工作表，请选择其中一个";
+                //    formSelectWorksheet.Width = 500;                    
+                //    formSelectWorksheet.Show();
+                //}
+
+                configDataTable = excelReader.dataTables[0];
+               
+                XmlParser xmlParser = new XmlParser(xmlFilePath);
+                xmlParser.ParserFC(configDataTable);
+            }
+
+            // 3. 导入xml文件
+            IList<PlcBlock> blocks = plcSoftware.BlockGroup.Blocks.Import(fileInfo, ImportOptions.Override);
 
         }
 
         //导入DB块
         private void btn_ImportDBs_Click(object sender, EventArgs e)
         {
+            string strBlockName = listBox_Main.SelectedItem.ToString();
+            PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
+            string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
+            FileInfo fileInfo = new FileInfo(xmlFilePath);
+            // 1. 导出选中的块到xml文件
+            if (File.Exists(xmlFilePath))
+            {
+                //如果文件已经存在，删除后重新导出
+                File.Delete(xmlFilePath);
+            }
+            block.Export(fileInfo, ExportOptions.WithDefaults);
 
+            // 2. 根据用户选择的配置文件重新编辑获得新的xml文件
+            OpenFileDialog selectFile = new OpenFileDialog();
+            selectFile.Title = "读取需要导入的配置文件";
+            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
+            selectFile.ShowDialog();
+
+            string excelFilePath = selectFile.FileName;
+            selectFile.Dispose();
+            if (excelFilePath != "")
+            {
+                ExcelReader excelReader = new ExcelReader(excelFilePath);
+
+                //// 如果存在多个工作表，需要用户选择一个
+                //if (excelReader.dataTables.Count>1)
+                //{
+                //    Form formSelectWorksheet = new Form();
+                //    formSelectWorksheet.Text = "配置文件有多个工作表，请选择其中一个";
+                //    formSelectWorksheet.Width = 500;                    
+                //    formSelectWorksheet.Show();
+                //}
+
+                configDataTable = excelReader.dataTables[0];
+
+                XmlParser xmlParser = new XmlParser(xmlFilePath);
+                foreach (DataRow rol in configDataTable.Rows)
+                {
+                    xmlParser.ParserDB(rol["引用DB"].ToString());
+                    IList<PlcBlock> blocks = plcSoftware.BlockGroup.Blocks.Import(fileInfo, ImportOptions.Override);
+                }
+            }
+
+            
         }
 
         //根据配置文件生成新的XML文件
@@ -199,7 +285,7 @@ namespace TiaProMacker
             {
                 ExcelReader excelReader = new ExcelReader(excelFilePath);
 
-                //// 如果存在多个工作部，需要用户选择一个
+                //// 如果存在多个工作表，需要用户选择一个
                 //if (excelReader.dataTables.Count>1)
                 //{
                 //    Form formSelectWorksheet = new Form();
@@ -219,6 +305,19 @@ namespace TiaProMacker
             }
 
 
+        }
+
+        //用户设置XML文件存放目录
+        private void btn_ChoseXmlFolder_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+            folderBrowserDialog.Description = "选择XML文件存放目录";
+            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            {
+                xmlFileFolder = folderBrowserDialog.SelectedPath;
+                txtBox_XmlFolderPath.Text = xmlFileFolder;
+            }
+            
         }
     }
 }
