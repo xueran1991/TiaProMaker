@@ -26,6 +26,15 @@ namespace TiaProMacker
         public Form1()
         {
             InitializeComponent();
+
+            // 按钮使能开关
+            btn_ExportBlockXml.Enabled = false;
+            btn_ImportDBs.Enabled = false;
+            btn_ImportFB.Enabled = false;
+            btn_ImportFC.Enabled = false;
+            btn_EnumBlockGroupsAndBlocks.Enabled = false;
+            btn_ConnectToTiaProject.Enabled = true;
+
         }
 
         // 存放导入的配置文件的DataTabe
@@ -77,7 +86,9 @@ namespace TiaProMacker
                         rowData += col.ToString() + "\t";
                     }
                     listBox_Main.Items.Add(rowData);
+                    
                 }
+                MessageBox.Show("Shouldn't show.");
             }
 
             
@@ -89,6 +100,7 @@ namespace TiaProMacker
             tiaProject = MyTiaPortal.ConnectToTiaProject();
             if(tiaProject != null)
             {
+                btn_EnumBlockGroupsAndBlocks.Enabled = true;
                 txt_Status.Text = tiaProject.Path.ToString();
             }
                         
@@ -102,6 +114,11 @@ namespace TiaProMacker
         private void btn_ClearListbox_Click(object sender, EventArgs e)
         {
             listBox_Main.Items.Clear();
+            // 关闭按钮使能
+            btn_ExportBlockXml.Enabled = false;
+            btn_ImportDBs.Enabled = false;
+            btn_ImportFB.Enabled = false;
+            btn_ImportFC.Enabled = false;
         }
 
         private void btn_GetSW_HW_Click(object sender, EventArgs e)
@@ -113,6 +130,7 @@ namespace TiaProMacker
         
         private void btn_EnumBlockGroupsAndBlocks_Click(object sender, EventArgs e)
         {
+            plcSoftware = MyTiaPortal.GetPlcSoftware();
             MyTiaPortal.EnumAllBlockGroupsAndBlocks();
             blocksDict = MyTiaPortal.blocksDict;
             
@@ -152,7 +170,6 @@ namespace TiaProMacker
         private void btn_ImportFC_Click(object sender, EventArgs e)
         {
             string strBlockName = listBox_Main.SelectedItem.ToString();
-            //PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
             PlcBlock block = blocksDict[strBlockName].Item1;
             string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
             FileInfo fileInfo = new FileInfo(xmlFilePath);
@@ -189,10 +206,12 @@ namespace TiaProMacker
                
                 XmlParser xmlParser = new XmlParser(xmlFilePath);
                 xmlParser.ParserFC(configDataTable);
+
+                // 3. 导入xml文件
+                IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
             }
 
-            // 3. 导入xml文件
-            IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override); 
+            
 
         }
 
@@ -237,8 +256,12 @@ namespace TiaProMacker
                 XmlParser xmlParser = new XmlParser(xmlFilePath);
                 foreach (DataRow rol in configDataTable.Rows)
                 {
-                    xmlParser.ParserDB(rol["引用DB"].ToString());                    
-                    IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
+                    //已经导入的DB块不再重复导入
+                    if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
+                    {   
+                        xmlParser.ParserDB(rol["引用DB"].ToString());
+                        IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
+                    }
                 }
             }
 
@@ -292,6 +315,52 @@ namespace TiaProMacker
                 txtBox_XmlFolderPath.Text = xmlFileFolder;
             }
             
+        }
+
+        //导入FB块
+        private void btn_ImportFB_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void listBox_Main_SelectedValueChanged(object sender, EventArgs e)
+        {
+            
+
+            // 关闭按钮使能
+            btn_ExportBlockXml.Enabled = false;
+            btn_ImportDBs.Enabled = false;
+            btn_ImportFB.Enabled = false;
+            btn_ImportFC.Enabled = false;
+
+            // 按需开启导入按钮使能
+            if (listBox_Main.SelectedItems.Count > 0)
+            {
+                string strBlockName = listBox_Main.SelectedItem.ToString();
+                PlcBlock block = blocksDict[strBlockName].Item1;
+                txt_Status.Text = block.GetType().Name;
+
+                switch (block.GetType().Name)
+                {
+                    case "InstanceDB":
+                        btn_ImportDBs.Enabled = true;
+                        btn_ExportBlockXml.Enabled = true;
+                        break;
+                    case "FB":
+                        btn_ImportFB.Enabled = true;
+                        btn_ExportBlockXml.Enabled = true;
+                        break;
+                    case "FC":
+                        btn_ImportFC.Enabled = true;
+                        btn_ExportBlockXml.Enabled = true;
+                        break;
+                    case "OB":
+                        btn_ExportBlockXml.Enabled = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 }
