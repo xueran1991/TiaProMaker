@@ -24,6 +24,8 @@ namespace src.Tia
         public static Project tiaProject;
         public static PlcSoftware plcSoftware;
 
+        public static Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>> blocksDict = new Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>>();
+
         // 连接到已经打开的TiaPortal项目上
         public static Project ConnectToTiaProject()
         {
@@ -72,7 +74,6 @@ namespace src.Tia
                     plcSoftware = GetPlcSoftware(device);
                 }
             }
-            //Form1.txt_Status.Text = "获得PLC软件："+plcSoftware.Name;
             return plcSoftware;
         }
 
@@ -102,10 +103,35 @@ namespace src.Tia
         //枚举所有块组和包含的块
         public static void EnumAllBlockGroupsAndBlocks()
         {
+            blocksDict.Clear();
+            // 程序块内所有不属于用户组的块
             foreach (PlcBlock block in plcSoftware.BlockGroup.Blocks)
             {
-                // Do something...
-                //Form1.listBox_Main.Items.Add(block.Name);
+                blocksDict.Add(block.Name, new Tuple<PlcBlock, PlcBlockGroup>(block, plcSoftware.BlockGroup));
+            }
+
+            // 枚举所有用户组及组内的所有块
+            foreach (PlcBlockUserGroup blockUserGroup in plcSoftware.BlockGroup.Groups)
+            {                
+                EnumerateBlockUserGroups(blockUserGroup);
+            }
+
+
+        }
+
+        private static void EnumerateBlockUserGroups(PlcBlockUserGroup blockUserGroup)
+        {
+            //本子组内的所有块
+            foreach (PlcBlock block in blockUserGroup.Blocks)
+            {
+                blocksDict.Add(block.Name, new Tuple<PlcBlock, PlcBlockGroup>(block, blockUserGroup));
+            }
+            //本子组内的所有下级子组
+            foreach (PlcBlockUserGroup subBlockUserGroup in blockUserGroup.Groups)
+            {
+                // recursion
+                EnumerateBlockUserGroups(subBlockUserGroup);                
+
             }
         }
 

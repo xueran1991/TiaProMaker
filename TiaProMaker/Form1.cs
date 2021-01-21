@@ -34,6 +34,8 @@ namespace TiaProMacker
         public Project tiaProject;
         // Tia项目中的软件（PLC、HMI）
         public PlcSoftware plcSoftware;
+        // 
+        public static Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>> blocksDict = new Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>>();
         // 存放xml文件的文件夹名
         public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TIA";
 
@@ -89,8 +91,7 @@ namespace TiaProMacker
             {
                 txt_Status.Text = tiaProject.Path.ToString();
             }
-            
-            
+                        
         }
 
         private void btn_DisposeTia_Click(object sender, EventArgs e)
@@ -109,47 +110,19 @@ namespace TiaProMacker
             listBox_Main.Items.Add(plcSoftware.BlockGroup.Name);
         }
 
-
-        #region EnumeratesAllPlcBlocks
         
         private void btn_EnumBlockGroupsAndBlocks_Click(object sender, EventArgs e)
         {
-            // 程序块内所有不属于用户组的块
-            foreach ( PlcBlock block in plcSoftware.BlockGroup.Blocks)
-            {
-                listBox_Main.Items.Add(block.Name);
-            }
-
-            // 枚举所有用户组及组内的所有块
-            foreach (PlcBlockUserGroup blockUserGroup in plcSoftware.BlockGroup.Groups)
-            {
-                listBox_Main.Items.Add("-1-1-1-1-1-" + blockUserGroup.Name);
-                EnumerateBlockUserGroups(blockUserGroup);
-            }
-        }
-        //Enumerates all block user groups including sub groups
-        private void EnumerateBlockUserGroups(PlcBlockUserGroup blockUserGroup)
-        {
-            //本子组内的所有块
+            MyTiaPortal.EnumAllBlockGroupsAndBlocks();
+            blocksDict = MyTiaPortal.blocksDict;
             
-            foreach (PlcBlock block in blockUserGroup.Blocks)
+            foreach (var blockName in blocksDict.Keys)
             {
-                listBox_Main.Items.Add(block.Name);
+                listBox_Main.Items.Add(blockName);
             }
-            //本子组内的所有下级子组
-            foreach (PlcBlockUserGroup subBlockUserGroup in blockUserGroup.Groups)
-            {
-                listBox_Main.Items.Add("-2-2-2-2-2-" + blockUserGroup.Name);
-                foreach (PlcBlock block in subBlockUserGroup.Blocks)
-                {
-                    listBox_Main.Items.Add(block.Name);
-                }
-                EnumerateBlockUserGroups(subBlockUserGroup);
-                // recursion
-                
-            }
-        }
-        #endregion
+            
+        }        
+        
 
         //导出选中的块到XML文件
         private void btn_ExportBlockXml_Click(object sender, EventArgs e)
@@ -179,7 +152,8 @@ namespace TiaProMacker
         private void btn_ImportFC_Click(object sender, EventArgs e)
         {
             string strBlockName = listBox_Main.SelectedItem.ToString();
-            PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
+            //PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
+            PlcBlock block = blocksDict[strBlockName].Item1;
             string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
             FileInfo fileInfo = new FileInfo(xmlFilePath);
             // 1. 导出选中的块到xml文件
@@ -218,7 +192,7 @@ namespace TiaProMacker
             }
 
             // 3. 导入xml文件
-            IList<PlcBlock> blocks = plcSoftware.BlockGroup.Blocks.Import(fileInfo, ImportOptions.Override);
+            IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override); 
 
         }
 
@@ -226,7 +200,7 @@ namespace TiaProMacker
         private void btn_ImportDBs_Click(object sender, EventArgs e)
         {
             string strBlockName = listBox_Main.SelectedItem.ToString();
-            PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
+            PlcBlock block = blocksDict[strBlockName].Item1;
             string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
             FileInfo fileInfo = new FileInfo(xmlFilePath);
             // 1. 导出选中的块到xml文件
@@ -263,8 +237,8 @@ namespace TiaProMacker
                 XmlParser xmlParser = new XmlParser(xmlFilePath);
                 foreach (DataRow rol in configDataTable.Rows)
                 {
-                    xmlParser.ParserDB(rol["引用DB"].ToString());
-                    IList<PlcBlock> blocks = plcSoftware.BlockGroup.Blocks.Import(fileInfo, ImportOptions.Override);
+                    xmlParser.ParserDB(rol["引用DB"].ToString());                    
+                    IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
                 }
             }
 
