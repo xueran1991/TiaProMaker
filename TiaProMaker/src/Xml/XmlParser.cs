@@ -14,7 +14,11 @@ namespace src.Xml
         public  XmlDocument xmlDocument;
         public  XmlNode rootNode;
         public  XmlNamespaceManager _ns;
+
         private string xmlFileFullPath;
+
+        // FC调用块的实例
+        public string instanceDBofFC;
 
         //构造函数，读入路径中的xml文件
         public XmlParser(string xmlFilePath)
@@ -63,6 +67,14 @@ namespace src.Xml
 
                 blockLinkTable.Rows.Add(row);
             }
+
+            // 模板程序段调用的实例DB
+            XmlNode callNode = networkTemplateNode.SelectSingleNode(".//SN:Call", _ns);
+            if (callNode != null)
+            {
+                instanceDBofFC = callNode.SelectSingleNode(".//SN:Component", _ns).Attributes["Name"].Value;
+            }
+            
 
             //根据导入文件的数据修改XML文件
             foreach (DataRow addObject in importDataTable.Rows)

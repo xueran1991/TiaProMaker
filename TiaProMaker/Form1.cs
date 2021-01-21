@@ -209,10 +209,43 @@ namespace TiaProMacker
 
                 // 3. 导入xml文件
                 IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
+
+                // 4. 导入FC块的实例DB块
+                if (checkBox_ImportDBsWhenIMportFC.Checked)
+                {
+                    string strInstanceDBName = xmlParser.instanceDBofFC;
+                    if (strInstanceDBName != null)
+                    {
+                        if (blocksDict.ContainsKey(strInstanceDBName))
+                        {
+                            
+                            PlcBlock instanceBlock = blocksDict[strInstanceDBName].Item1;
+                            string instanceDBXmlFilePath = xmlFileFolder + "\\" + strInstanceDBName + ".xml";
+                            FileInfo instanceDBFileInfo = new FileInfo(instanceDBXmlFilePath);
+                            // 导出实例DB块到xml文件
+                            if (File.Exists(instanceDBXmlFilePath))
+                            {
+                                //如果文件已经存在，删除后重新导出
+                                File.Delete(instanceDBXmlFilePath);
+                            }
+                            instanceBlock.Export(instanceDBFileInfo, ExportOptions.WithDefaults);
+                            XmlParser xmlParserDB = new XmlParser(instanceDBXmlFilePath);
+
+                            foreach (DataRow rol in configDataTable.Rows)
+                            {
+                                //已经导入的DB块不再重复导入
+                                if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
+                                {
+                                    xmlParserDB.ParserDB(rol["引用DB"].ToString());
+                                    IList<PlcBlock> blocksDBs = blocksDict[strInstanceDBName].Item2.Blocks.Import(instanceDBFileInfo, ImportOptions.Override);
+                                }
+                            }
+                        }
+                    }
+                   
+                }
             }
-
             
-
         }
 
         //导入DB块

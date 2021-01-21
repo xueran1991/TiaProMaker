@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.btn_ReadExcel = new System.Windows.Forms.Button();
             this.listBox_Main = new System.Windows.Forms.ListBox();
             this.btn_ConnectToTiaProject = new System.Windows.Forms.Button();
@@ -42,6 +43,7 @@
             this.btn_ChoseXmlFolder = new System.Windows.Forms.Button();
             this.btn_ImportFB = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
+            this.checkBox_ImportDBsWhenIMportFC = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btn_ReadExcel
@@ -185,11 +187,22 @@
             this.label2.TabIndex = 12;
             this.label2.Text = "Status:";
             // 
+            // checkBox_ImportDBsWhenIMportFC
+            // 
+            this.checkBox_ImportDBsWhenIMportFC.AutoSize = true;
+            this.checkBox_ImportDBsWhenIMportFC.Location = new System.Drawing.Point(27, 745);
+            this.checkBox_ImportDBsWhenIMportFC.Name = "checkBox_ImportDBsWhenIMportFC";
+            this.checkBox_ImportDBsWhenIMportFC.Size = new System.Drawing.Size(367, 22);
+            this.checkBox_ImportDBsWhenIMportFC.TabIndex = 15;
+            this.checkBox_ImportDBsWhenIMportFC.Text = "Import instance DBs when importing FC";
+            this.checkBox_ImportDBsWhenIMportFC.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1101, 811);
+            this.Controls.Add(this.checkBox_ImportDBsWhenIMportFC);
             this.Controls.Add(this.btn_ImportFB);
             this.Controls.Add(this.btn_ChoseXmlFolder);
             this.Controls.Add(this.label2);
@@ -204,8 +217,11 @@
             this.Controls.Add(this.btn_ConnectToTiaProject);
             this.Controls.Add(this.listBox_Main);
             this.Controls.Add(this.btn_ReadExcel);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Tia Project Maker";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -228,6 +244,7 @@
         private System.Windows.Forms.Button btn_ChoseXmlFolder;
         private System.Windows.Forms.Button btn_ImportFB;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.CheckBox checkBox_ImportDBsWhenIMportFC;
     }
 }
 
