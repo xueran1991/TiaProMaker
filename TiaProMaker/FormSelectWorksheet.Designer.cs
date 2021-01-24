@@ -39,7 +39,7 @@
             this.checkedListBox_SelectWorksheet.Location = new System.Drawing.Point(12, 24);
             this.checkedListBox_SelectWorksheet.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.checkedListBox_SelectWorksheet.Name = "checkedListBox_SelectWorksheet";
-            this.checkedListBox_SelectWorksheet.Size = new System.Drawing.Size(370, 395);
+            this.checkedListBox_SelectWorksheet.Size = new System.Drawing.Size(370, 378);
             this.checkedListBox_SelectWorksheet.TabIndex = 0;
             this.checkedListBox_SelectWorksheet.SelectedIndexChanged += new System.EventHandler(this.checkedListBox_SelectWorksheet_SelectedIndexChanged);
             // 
@@ -62,8 +62,12 @@
             this.ClientSize = new System.Drawing.Size(394, 523);
             this.Controls.Add(this.btn_ConfimSelection);
             this.Controls.Add(this.checkedListBox_SelectWorksheet);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "FormSelectWorksheet";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "请选择一个工作表";
             this.ResumeLayout(false);
 

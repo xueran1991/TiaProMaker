@@ -35,7 +35,7 @@ namespace TiaProMaker
             btn_ImportFC.Enabled = false;
             btn_EnumBlockGroupsAndBlocks.Enabled = false;
             btn_ConnectToTiaProject.Enabled = true;
-
+            txtBox_XmlFolderPath.Text = xmlFileFolder;
         }
 
         // 存放导入的配置文件的DataTabe
@@ -46,18 +46,13 @@ namespace TiaProMaker
         public PlcSoftware plcSoftware;
         // 存放块名称、块对象、块所在块组的字典
         public static Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>> blocksDict = new Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>>();
-        // 存放xml文件的文件夹名
-        public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TIA";
+        // 默认存放xml文件的文件夹名
+        public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TiaProMaker";
         // 用户选择的工作表名称
         public static string selectedWorhsheetName;
         // 需要用户选择的Excel工作表
         public static List<string> workSheetNames = new List<string>();
 
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
 
         // 读取工作表，输出DataTable
         private DataTable GetDataTableViaDialog()
@@ -114,6 +109,7 @@ namespace TiaProMaker
 
         }
 
+        // 读取工作表
         private void btn_ReadExcel_Click(object sender, EventArgs e)
         {
             configDataTable  = GetDataTableViaDialog();
@@ -134,6 +130,7 @@ namespace TiaProMaker
 
         }
 
+        // 连接到已打开的Tia Portal项目
         private void btn_ConnectToTiaProject_Click(object sender, EventArgs e)
         {
 
@@ -146,11 +143,13 @@ namespace TiaProMaker
                         
         }
 
+        // 断开与Tia Portal项目的连接
         private void btn_DisposeTia_Click(object sender, EventArgs e)
         {
             MyTiaPortal.DisposeTiaPortal();
         }
 
+        // 清空显示框
         private void btn_ClearListbox_Click(object sender, EventArgs e)
         {
             listBox_Main.Items.Clear();
@@ -161,15 +160,17 @@ namespace TiaProMaker
             btn_ImportFC.Enabled = false;
         }
 
+        // 获取项目的软硬件
         private void btn_GetSW_HW_Click(object sender, EventArgs e)
         {
             plcSoftware = MyTiaPortal.GetPlcSoftware();
             listBox_Main.Items.Add(plcSoftware.BlockGroup.Name);
         }
 
-        
+        // 枚举所有块
         private void btn_EnumBlockGroupsAndBlocks_Click(object sender, EventArgs e)
         {
+            listBox_Main.Items.Clear();
             plcSoftware = MyTiaPortal.GetPlcSoftware();
             MyTiaPortal.EnumAllBlockGroupsAndBlocks();
             blocksDict = MyTiaPortal.blocksDict;
@@ -181,28 +182,18 @@ namespace TiaProMaker
             
         }        
         
-
         // 导出选中的块到XML文件
         private void btn_ExportBlockXml_Click(object sender, EventArgs e)
         {
             if (listBox_Main.SelectedItems.Count > 0)
             {
                 string strBlockName = listBox_Main.SelectedItem.ToString();
-                //MessageBox.Show(strBlockName);
-                PlcBlock block = plcSoftware.BlockGroup.Blocks.Find(strBlockName);
-
+                PlcBlock block = blocksDict[strBlockName].Item1;
                 FileInfo fileInfo = new FileInfo(xmlFileFolder + "\\" + block.Name + ".xml");
-                if(File.Exists(fileInfo.ToString()))
-                {
-                    File.Delete(fileInfo.ToString());
-                }
-                block.Export(fileInfo, ExportOptions.WithDefaults);
-                MessageBox.Show("已导出块：" + block.Name + "到.xml文件");
-                
-            }
 
-            PlcBlockUserGroupComposition userGroupComposition = plcSoftware.BlockGroup.Groups;
-            PlcBlockUserGroup plcBlockUserGroup = userGroupComposition.Find("DBs");
+                MyTiaPortal.ExportBlockToXml(block, fileInfo);
+                MessageBox.Show("已导出块：" + block.Name + "到.xml文件");                
+            }            
                        
         }
 
@@ -214,14 +205,9 @@ namespace TiaProMaker
             string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
             FileInfo fileInfo = new FileInfo(xmlFilePath);
             // 1. 导出选中的块到xml文件
-            if (File.Exists(xmlFilePath))
-            {
-                //如果文件已经存在，删除后重新导出
-                File.Delete(xmlFilePath);
-            }
-            block.Export(fileInfo, ExportOptions.WithDefaults);
+            MyTiaPortal.ExportBlockToXml(block, fileInfo);
 
-
+            // 2. 读取表格数据
             configDataTable = GetDataTableViaDialog();
             if (configDataTable == null)
             {
@@ -229,13 +215,14 @@ namespace TiaProMaker
                 return;
             }
 
+            // 3. 解析xml文件
             XmlParser xmlParser = new XmlParser(xmlFilePath);
             xmlParser.ParserFC(configDataTable);
 
-            // 3. 导入xml文件
+            // 4. 导入xml文件
             IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
 
-            // 4. 导入FC块的实例DB块
+            // 5. 导入FC块的实例DB块
             if (checkBox_ImportDBsWhenIMportFC.Checked)
             {
                 string strInstanceDBName = xmlParser.instanceDBofFC;
@@ -247,13 +234,11 @@ namespace TiaProMaker
                         PlcBlock instanceBlock = blocksDict[strInstanceDBName].Item1;
                         string instanceDBXmlFilePath = xmlFileFolder + "\\" + strInstanceDBName + ".xml";
                         FileInfo instanceDBFileInfo = new FileInfo(instanceDBXmlFilePath);
+
                         // 导出实例DB块到xml文件
-                        if (File.Exists(instanceDBXmlFilePath))
-                        {
-                            //如果文件已经存在，删除后重新导出
-                            File.Delete(instanceDBXmlFilePath);
-                        }
-                        instanceBlock.Export(instanceDBFileInfo, ExportOptions.WithDefaults);
+                        MyTiaPortal.ExportBlockToXml(instanceBlock, instanceDBFileInfo);
+                        
+                        // DB块的解析实例
                         XmlParser xmlParserDB = new XmlParser(instanceDBXmlFilePath);
 
                         foreach (DataRow rol in configDataTable.Rows)
@@ -261,6 +246,7 @@ namespace TiaProMaker
                             //已经导入的DB块不再重复导入
                             if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
                             {
+                                // 只修改DB块的名称后导入xml文件
                                 xmlParserDB.ParserDB(rol["引用DB"].ToString());
                                 IList<PlcBlock> blocksDBs = blocksDict[strInstanceDBName].Item2.Blocks.Import(instanceDBFileInfo, ImportOptions.Override);
                             }
@@ -280,7 +266,12 @@ namespace TiaProMaker
             string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
             FileInfo fileInfo = new FileInfo(xmlFilePath);
 
+            // 导出选中的块到xml文件
+            MyTiaPortal.ExportBlockToXml(block, fileInfo);
+
+            // 读取表格数据
             configDataTable = GetDataTableViaDialog();
+
             if (configDataTable == null)
             {
                 MessageBox.Show("没有读取到导入配置数据");
@@ -298,10 +289,8 @@ namespace TiaProMaker
                 }
             }
         }
-
-            
+                   
         
-
         // 根据配置文件生成新的XML文件
         private void btn_GenerateNewXml_Click(object sender, EventArgs e)
         {

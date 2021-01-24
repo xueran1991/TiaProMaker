@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 using Siemens.Engineering;
 using Siemens.Engineering.SW;
@@ -16,7 +17,7 @@ namespace src.Tia
 {
     class MyTiaPortal
     {
-        // 
+        
         public static TiaPortal tiaPortal;
         public static TiaPortalProcess tiaPortalProcess;
         public static Project tiaProject;
@@ -56,13 +57,13 @@ namespace src.Tia
             }
         }
 
-        //断开与TiaPortal的连接
+        // 断开与TiaPortal的连接
         public static void DisposeTiaPortal()
         {
             tiaPortal.Dispose();           
         }
 
-        //获取Tia项目的软件
+        // 获取Tia项目的软件
         public static PlcSoftware GetPlcSoftware()
         {
             foreach (Device device in tiaProject.Devices)
@@ -75,7 +76,7 @@ namespace src.Tia
             return plcSoftware;
         }
 
-        //从硬件获取TIA项目的软件
+        // 从硬件获取TIA项目的软件
         private static PlcSoftware GetPlcSoftware(Device device)
         {
             //***********************************************************
@@ -98,7 +99,7 @@ namespace src.Tia
         }
         
 
-        //枚举所有块组和包含的块
+        // 枚举所有块组和包含的块
         public static void EnumAllBlockGroupsAndBlocks()
         {
             blocksDict.Clear();
@@ -116,7 +117,7 @@ namespace src.Tia
 
 
         }
-
+        // 枚举块的递归
         private static void EnumerateBlockUserGroups(PlcBlockUserGroup blockUserGroup)
         {
             //本子组内的所有块
@@ -133,5 +134,23 @@ namespace src.Tia
             }
         }
 
+        // 从程序块导出xml到指定路径
+        public static void ExportBlockToXml(PlcBlock block, FileInfo fileInfo)
+        {
+            string directoryName = Path.GetDirectoryName(fileInfo.ToString());
+            // 如果文件夹不存在，则先创建文件夹
+            if ( ! Directory.Exists(directoryName))
+            {
+                Directory.CreateDirectory(directoryName);
+            }
+
+            // 如果文件已经存在，删除后重新导出
+            if (fileInfo.Exists)
+            {                
+                fileInfo.Delete();                
+            }
+            // 导出块到xml
+            block.Export(fileInfo, ExportOptions.WithDefaults);
+        }
     }
 }
