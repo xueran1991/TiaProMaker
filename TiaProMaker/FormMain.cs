@@ -50,12 +50,67 @@ namespace TiaProMaker
         public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TIA";
         // 用户选择的工作表名称
         public static string selectedWorhsheetName;
-
+        // 需要用户选择的Excel工作表
         public static List<string> workSheetNames = new List<string>();
 
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
+        }
+
+        // 读取工作表，输出DataTable
+        private DataTable GetDataTableViaDialog()
+        {
+            // 
+            // 读取Excel(.xls\.xlsx)文件，如果只有一个工作表，直接输出该表的DataTable
+            // 如果有多个工作表，弹出对话框由用户选择一个工作表进行输出
+            //
+
+            DataTable dataTable = new DataTable();
+            selectedWorhsheetName = "";
+            workSheetNames.Clear();
+
+            OpenFileDialog selectFile = new OpenFileDialog();
+            selectFile.Title = "读取需要导入的配置文件";
+            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
+            selectFile.ShowDialog();
+
+            string excelFilePath = selectFile.FileName;
+            selectFile.Dispose();
+
+            if (excelFilePath != "")
+            {
+                ExcelReader excelReader = new ExcelReader(excelFilePath);
+
+                // 如果存在多个工作表，需要用户选择一个
+                if (excelReader.dataTables.Count > 1)
+                {
+                    foreach (DataTable table in excelReader.dataTables)
+                    {
+                        workSheetNames.Add(table.TableName);
+                    }
+                    FormSelectWorksheet formSelectWorksheet = new FormSelectWorksheet();
+                    formSelectWorksheet.ShowDialog();
+
+                    // 等待用户选择工作表名称
+
+                    if (selectedWorhsheetName != "")
+                    {
+                        dataTable = excelReader.dataTables[selectedWorhsheetName];
+                        return dataTable;
+                    }
+
+                }
+                else
+                {
+                    // 如果只有一个工作表，直接输出
+                    dataTable = excelReader.dataTables[0];
+                    return dataTable;
+                }
+            }
+
+            return null;
 
         }
 
@@ -75,9 +130,7 @@ namespace TiaProMaker
                     rowData += col.ToString() + "\t";
                 }
                 listBox_Main.Items.Add(rowData);
-
             }
-
 
         }
 
@@ -129,7 +182,7 @@ namespace TiaProMaker
         }        
         
 
-        //导出选中的块到XML文件
+        // 导出选中的块到XML文件
         private void btn_ExportBlockXml_Click(object sender, EventArgs e)
         {
             if (listBox_Main.SelectedItems.Count > 0)
@@ -153,7 +206,7 @@ namespace TiaProMaker
                        
         }
 
-        //导入FC块
+        // 导入FC块
         private void btn_ImportFC_Click(object sender, EventArgs e)
         {
             string strBlockName = listBox_Main.SelectedItem.ToString();
@@ -168,127 +221,88 @@ namespace TiaProMaker
             }
             block.Export(fileInfo, ExportOptions.WithDefaults);
 
-            // 2. 根据用户选择的配置文件重新编辑获得新的xml文件
-            OpenFileDialog selectFile = new OpenFileDialog();
-            selectFile.Title = "读取需要导入的配置文件";
-            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
-            selectFile.ShowDialog();
 
-            string excelFilePath = selectFile.FileName;
-            selectFile.Dispose();
-            if (excelFilePath != "")
+            configDataTable = GetDataTableViaDialog();
+            if (configDataTable == null)
             {
-                ExcelReader excelReader = new ExcelReader(excelFilePath);
+                MessageBox.Show("没有读取到导入配置数据");
+                return;
+            }
 
-                //// 如果存在多个工作表，需要用户选择一个
-                //if (excelReader.dataTables.Count>1)
-                //{
-                //    Form formSelectWorksheet = new Form();
-                //    formSelectWorksheet.Text = "配置文件有多个工作表，请选择其中一个";
-                //    formSelectWorksheet.Width = 500;                    
-                //    formSelectWorksheet.Show();
-                //}
+            XmlParser xmlParser = new XmlParser(xmlFilePath);
+            xmlParser.ParserFC(configDataTable);
 
-                configDataTable = excelReader.dataTables[0];
-               
-                XmlParser xmlParser = new XmlParser(xmlFilePath);
-                xmlParser.ParserFC(configDataTable);
+            // 3. 导入xml文件
+            IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
 
-                // 3. 导入xml文件
-                IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
-
-                // 4. 导入FC块的实例DB块
-                if (checkBox_ImportDBsWhenIMportFC.Checked)
+            // 4. 导入FC块的实例DB块
+            if (checkBox_ImportDBsWhenIMportFC.Checked)
+            {
+                string strInstanceDBName = xmlParser.instanceDBofFC;
+                if (strInstanceDBName != null)
                 {
-                    string strInstanceDBName = xmlParser.instanceDBofFC;
-                    if (strInstanceDBName != null)
+                    if (blocksDict.ContainsKey(strInstanceDBName))
                     {
-                        if (blocksDict.ContainsKey(strInstanceDBName))
-                        {
-                            
-                            PlcBlock instanceBlock = blocksDict[strInstanceDBName].Item1;
-                            string instanceDBXmlFilePath = xmlFileFolder + "\\" + strInstanceDBName + ".xml";
-                            FileInfo instanceDBFileInfo = new FileInfo(instanceDBXmlFilePath);
-                            // 导出实例DB块到xml文件
-                            if (File.Exists(instanceDBXmlFilePath))
-                            {
-                                //如果文件已经存在，删除后重新导出
-                                File.Delete(instanceDBXmlFilePath);
-                            }
-                            instanceBlock.Export(instanceDBFileInfo, ExportOptions.WithDefaults);
-                            XmlParser xmlParserDB = new XmlParser(instanceDBXmlFilePath);
 
-                            foreach (DataRow rol in configDataTable.Rows)
+                        PlcBlock instanceBlock = blocksDict[strInstanceDBName].Item1;
+                        string instanceDBXmlFilePath = xmlFileFolder + "\\" + strInstanceDBName + ".xml";
+                        FileInfo instanceDBFileInfo = new FileInfo(instanceDBXmlFilePath);
+                        // 导出实例DB块到xml文件
+                        if (File.Exists(instanceDBXmlFilePath))
+                        {
+                            //如果文件已经存在，删除后重新导出
+                            File.Delete(instanceDBXmlFilePath);
+                        }
+                        instanceBlock.Export(instanceDBFileInfo, ExportOptions.WithDefaults);
+                        XmlParser xmlParserDB = new XmlParser(instanceDBXmlFilePath);
+
+                        foreach (DataRow rol in configDataTable.Rows)
+                        {
+                            //已经导入的DB块不再重复导入
+                            if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
                             {
-                                //已经导入的DB块不再重复导入
-                                if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
-                                {
-                                    xmlParserDB.ParserDB(rol["引用DB"].ToString());
-                                    IList<PlcBlock> blocksDBs = blocksDict[strInstanceDBName].Item2.Blocks.Import(instanceDBFileInfo, ImportOptions.Override);
-                                }
+                                xmlParserDB.ParserDB(rol["引用DB"].ToString());
+                                IList<PlcBlock> blocksDBs = blocksDict[strInstanceDBName].Item2.Blocks.Import(instanceDBFileInfo, ImportOptions.Override);
                             }
                         }
                     }
-                   
                 }
-            }
-            
-        }
 
-        //导入DB块
+            }
+        }
+           
+        
+        // 导入DB块
         private void btn_ImportDBs_Click(object sender, EventArgs e)
         {
             string strBlockName = listBox_Main.SelectedItem.ToString();
             PlcBlock block = blocksDict[strBlockName].Item1;
             string xmlFilePath = xmlFileFolder + "\\" + strBlockName + ".xml";
             FileInfo fileInfo = new FileInfo(xmlFilePath);
-            // 1. 导出选中的块到xml文件
-            if (File.Exists(xmlFilePath))
+
+            configDataTable = GetDataTableViaDialog();
+            if (configDataTable == null)
             {
-                //如果文件已经存在，删除后重新导出
-                File.Delete(xmlFilePath);
+                MessageBox.Show("没有读取到导入配置数据");
+                return;
             }
-            block.Export(fileInfo, ExportOptions.WithDefaults);
 
-            // 2. 根据用户选择的配置文件重新编辑获得新的xml文件
-            OpenFileDialog selectFile = new OpenFileDialog();
-            selectFile.Title = "读取需要导入的配置文件";
-            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
-            selectFile.ShowDialog();
-
-            string excelFilePath = selectFile.FileName;
-            selectFile.Dispose();
-            if (excelFilePath != "")
+            XmlParser xmlParser = new XmlParser(xmlFilePath);
+            foreach (DataRow rol in configDataTable.Rows)
             {
-                ExcelReader excelReader = new ExcelReader(excelFilePath);
-
-                //// 如果存在多个工作表，需要用户选择一个
-                //if (excelReader.dataTables.Count>1)
-                //{
-                //    Form formSelectWorksheet = new Form();
-                //    formSelectWorksheet.Text = "配置文件有多个工作表，请选择其中一个";
-                //    formSelectWorksheet.Width = 500;                    
-                //    formSelectWorksheet.Show();
-                //}
-
-                configDataTable = excelReader.dataTables[0];
-
-                XmlParser xmlParser = new XmlParser(xmlFilePath);
-                foreach (DataRow rol in configDataTable.Rows)
+                //已经导入的DB块不再重复导入
+                if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
                 {
-                    //已经导入的DB块不再重复导入
-                    if (!blocksDict.ContainsKey(rol["引用DB"].ToString()))
-                    {   
-                        xmlParser.ParserDB(rol["引用DB"].ToString());
-                        IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
-                    }
+                    xmlParser.ParserDB(rol["引用DB"].ToString());
+                    IList<PlcBlock> blocks = blocksDict[strBlockName].Item2.Blocks.Import(fileInfo, ImportOptions.Override);
                 }
             }
-
-            
         }
 
-        //根据配置文件生成新的XML文件
+            
+        
+
+        // 根据配置文件生成新的XML文件
         private void btn_GenerateNewXml_Click(object sender, EventArgs e)
         {
             OpenFileDialog selectFile = new OpenFileDialog();
@@ -324,7 +338,7 @@ namespace TiaProMaker
 
         }
 
-        //用户设置XML文件存放目录
+        // 用户设置XML文件存放目录
         private void btn_ChoseXmlFolder_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
@@ -337,13 +351,13 @@ namespace TiaProMaker
             
         }
 
-        //导入FB块
+        // 导入FB块
         private void btn_ImportFB_Click(object sender, EventArgs e)
         {
 
         }
 
-        //根据选中的块类型调整按钮权限
+        // 根据选中的块类型调整按钮权限
         private void listBox_Main_SelectedValueChanged(object sender, EventArgs e)
         {
             
@@ -384,57 +398,6 @@ namespace TiaProMaker
             }
         }
 
-        //
-        private DataTable  GetDataTableViaDialog()
-        {
-            // 
-            // 根据用户选择的配置文件重新编辑获得新的xml文件
-            //
-
-            DataTable dataTable;
-            selectedWorhsheetName = "";
-            workSheetNames.Clear();
-
-            OpenFileDialog selectFile = new OpenFileDialog();
-            selectFile.Title = "读取需要导入的配置文件";
-            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
-            selectFile.ShowDialog();
-
-            string excelFilePath = selectFile.FileName;
-            selectFile.Dispose();
-            if (excelFilePath != "")
-            {
-                ExcelReader excelReader = new ExcelReader(excelFilePath);
-
-                // 如果存在多个工作表，需要用户选择一个
-                if (excelReader.dataTables.Count > 1)
-                {
-                    foreach (DataTable table in excelReader.dataTables)
-                    {
-                        workSheetNames.Add(table.TableName);
-                    }
-                    FormSelectWorksheet formSelectWorksheet = new FormSelectWorksheet();
-                    formSelectWorksheet.ShowDialog();
-
-                    // 等待用户选择工作表名称
-
-                    if (selectedWorhsheetName != "")
-                    {
-                        dataTable = excelReader.dataTables[selectedWorhsheetName];
-                        return dataTable;
-                    }
-
-                }
-                else
-                {
-                    // 如果只有一个工作表，直接输出
-                    dataTable = excelReader.dataTables[0];
-                    return dataTable;
-                }
-            }
-
-            return null;           
-            
-        }
+        
     }
 }
