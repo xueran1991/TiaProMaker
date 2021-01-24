@@ -3,6 +3,7 @@ using System.IO;
 using ExcelDataReader;
 using System.Data;
 
+
 namespace src.ReadExcel
 {
     class ExcelReader
@@ -15,7 +16,9 @@ namespace src.ReadExcel
 
         public ExcelReader(String filePath)
         {
-            // 读取Excel文件
+            //
+            // 从函数参数指定的路径中读取Excel文件
+            //
             excelFilepath = filePath;
             FileStream fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read);
             IExcelDataReader excelDataReader = ExcelReaderFactory.CreateOpenXmlReader(fileStream);
@@ -40,5 +43,7 @@ namespace src.ReadExcel
             excelDataReader.Close();
 
         }
+
+        
     }
 }

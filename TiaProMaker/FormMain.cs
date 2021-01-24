@@ -19,11 +19,12 @@ using Siemens.Engineering.SW.Blocks;
 using Siemens.Engineering.Hmi;
 using Siemens.Engineering.HW;
 
-namespace TiaProMacker
+
+namespace TiaProMaker
 {
-    public partial class Form1 : Form
+    public partial class FormMain : Form
     {
-        public Form1()
+        public FormMain()
         {
             InitializeComponent();
 
@@ -43,10 +44,15 @@ namespace TiaProMacker
         public Project tiaProject;
         // Tia项目中的软件（PLC、HMI）
         public PlcSoftware plcSoftware;
-        // 
+        // 存放块名称、块对象、块所在块组的字典
         public static Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>> blocksDict = new Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>>();
         // 存放xml文件的文件夹名
         public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TIA";
+        // 用户选择的工作表名称
+        public static string selectedWorhsheetName;
+
+        public static List<string> workSheetNames = new List<string>();
+
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -55,43 +61,24 @@ namespace TiaProMacker
 
         private void btn_ReadExcel_Click(object sender, EventArgs e)
         {
-            OpenFileDialog selectFile = new OpenFileDialog();
-            selectFile.Title = "读取配置文件";
-            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
-            selectFile.ShowDialog();
-            //this.listBox_Main.Items.Add(selectFile.FileName);
-
-            string excelFilePath = selectFile.FileName;
-            selectFile.Dispose();
-            if (excelFilePath != "")
+            configDataTable  = GetDataTableViaDialog();
+            string rowData;
+            if (configDataTable == null)
             {
-                string rowData = "";
-                ExcelReader excelReader = new ExcelReader(excelFilePath);
-
-                //// 如果存在多个工作部，需要用户选择一个
-                //if (excelReader.dataTables.Count>1)
-                //{
-                //    Form formSelectWorksheet = new Form();
-                //    formSelectWorksheet.Text = "配置文件有多个工作表，请选择其中一个";
-                //    formSelectWorksheet.Width = 500;                    
-                //    formSelectWorksheet.Show();
-                //}
-
-                configDataTable = excelReader.dataTables[0];
-                foreach (DataRow row in configDataTable.Rows)
+                return;
+            }
+            foreach (DataRow row in configDataTable.Rows)
+            {
+                rowData = "";
+                foreach (var col in row.ItemArray)
                 {
-                    rowData = "";
-                    foreach (var col in row.ItemArray)
-                    {
-                        rowData += col.ToString() + "\t";
-                    }
-                    listBox_Main.Items.Add(rowData);
-                    
+                    rowData += col.ToString() + "\t";
                 }
-                MessageBox.Show("Shouldn't show.");
+                listBox_Main.Items.Add(rowData);
+
             }
 
-            
+
         }
 
         private void btn_ConnectToTiaProject_Click(object sender, EventArgs e)
@@ -356,6 +343,7 @@ namespace TiaProMacker
 
         }
 
+        //根据选中的块类型调整按钮权限
         private void listBox_Main_SelectedValueChanged(object sender, EventArgs e)
         {
             
@@ -394,6 +382,59 @@ namespace TiaProMacker
                         break;
                 }
             }
+        }
+
+        //
+        private DataTable  GetDataTableViaDialog()
+        {
+            // 
+            // 根据用户选择的配置文件重新编辑获得新的xml文件
+            //
+
+            DataTable dataTable;
+            selectedWorhsheetName = "";
+            workSheetNames.Clear();
+
+            OpenFileDialog selectFile = new OpenFileDialog();
+            selectFile.Title = "读取需要导入的配置文件";
+            selectFile.Filter = "xlsx files|*.xlsx|xls files|*.xls";
+            selectFile.ShowDialog();
+
+            string excelFilePath = selectFile.FileName;
+            selectFile.Dispose();
+            if (excelFilePath != "")
+            {
+                ExcelReader excelReader = new ExcelReader(excelFilePath);
+
+                // 如果存在多个工作表，需要用户选择一个
+                if (excelReader.dataTables.Count > 1)
+                {
+                    foreach (DataTable table in excelReader.dataTables)
+                    {
+                        workSheetNames.Add(table.TableName);
+                    }
+                    FormSelectWorksheet formSelectWorksheet = new FormSelectWorksheet();
+                    formSelectWorksheet.ShowDialog();
+
+                    // 等待用户选择工作表名称
+
+                    if (selectedWorhsheetName != "")
+                    {
+                        dataTable = excelReader.dataTables[selectedWorhsheetName];
+                        return dataTable;
+                    }
+
+                }
+                else
+                {
+                    // 如果只有一个工作表，直接输出
+                    dataTable = excelReader.dataTables[0];
+                    return dataTable;
+                }
+            }
+
+            return null;           
+            
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿namespace TiaProMacker
+﻿namespace TiaProMaker
 {
-    partial class Form1
+    partial class FormMain
     {
         /// <summary>
         /// 必需的设计器变量。
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.btn_ReadExcel = new System.Windows.Forms.Button();
             this.listBox_Main = new System.Windows.Forms.ListBox();
             this.btn_ConnectToTiaProject = new System.Windows.Forms.Button();
