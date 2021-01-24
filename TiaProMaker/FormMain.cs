@@ -13,6 +13,8 @@ using System.IO;
 using src.ReadExcel;
 using src.Tia;
 using src.Xml;
+using TiaProMaker.data;
+
 using Siemens.Engineering;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
@@ -35,6 +37,8 @@ namespace TiaProMaker
             btn_ImportFC.Enabled = false;
             btn_EnumBlockGroupsAndBlocks.Enabled = false;
             btn_ConnectToTiaProject.Enabled = true;
+
+            xmlFileFolder = UI.Default.xmlFileFolder;
             txtBox_XmlFolderPath.Text = xmlFileFolder;
         }
 
@@ -47,7 +51,7 @@ namespace TiaProMaker
         // 存放块名称、块对象、块所在块组的字典
         public static Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>> blocksDict = new Dictionary<string, Tuple<PlcBlock, PlcBlockGroup>>();
         // 默认存放xml文件的文件夹名
-        public string xmlFileFolder = "D:\\Users\\MY\\Desktop\\TiaProMaker";
+        public string xmlFileFolder;
         // 用户选择的工作表名称
         public static string selectedWorhsheetName;
         // 需要用户选择的Excel工作表
@@ -387,6 +391,12 @@ namespace TiaProMaker
             }
         }
 
-        
+        // 窗体关闭时保存界面上的用户输入信息
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            UI.Default.xmlFileFolder = xmlFileFolder;
+
+            UI.Default.Save();
+        }
     }
 }
